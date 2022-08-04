@@ -54,7 +54,21 @@ export default class DatatypePlugin extends Plugin {
 			let userOptions = {};
 			let error = null;
 
-			el.innerHTML = "<div class='datatype'>(datatype here)</div>";
+			let lines = source.split('\n');
+
+			let args: { [key: string]: string } = {};
+			for (let line of lines) {
+				let [key, value] = line.split(':');
+				args[key] = value.trim();
+			}
+
+			// get the value of the 'type' entry in args
+			if (args['type'] == "hello") {
+				el.innerHTML = "Hello, World!</div>";
+			} else {
+				el.innerHTML = "<div class='datatype'>(unknown datatype '" + args['type'] + "'; install a plugin)</div>";
+			}
+
 
 			if (error !== null) {
 				const errorNode = document.createElement('div');

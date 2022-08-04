@@ -25,8 +25,39 @@ export default class DatatypePlugin extends Plugin {
 
 	postprocessors: Map<string, MarkdownPostProcessor> = new Map();
 
-	async renderDatatype(el, source, obj): Promise<void> {
-		el.innerHTML = '<div class=".datatype-object">datatype here</div>';
+	async render(source: string, el: HTMLElement): Promise<void> {
+		let error = null;
+
+		let lines = source.split('\n');
+
+		let args: { [key: string]: string | null } = {};
+		for (let line of lines) {
+			let [key, value] = line.split(':');
+
+			if (value === undefined) {
+				args[key] = null;
+			} else {
+				args[key] = value.trim();
+			}
+		}
+
+		// get the value of the 'type' entry in args
+		if (args['type'] == "hello") {
+			el.innerHTML = "<div>Hello, World!</div>";
+			el.addClass("obsidian-datatype");
+		} else if (args['type'] == "carrot") {
+			el.innerHTML = "<div>🥕</div>";
+			el.addClass("obsidian-datatype");
+		} else {
+			error = "Unknown datatype '" + args['type'] + "'; install a plugin.";
+		}
+
+		if (error !== null) {
+			const errorNode = document.createElement('div');
+			errorNode.innerHTML = error;
+			errorNode.addClass("obsidian-datatype-error");
+			el.appendChild(errorNode);
+		}
 	}
 
 	async onload(): Promise<void> {
@@ -51,43 +82,23 @@ export default class DatatypePlugin extends Plugin {
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
 		this.registerMarkdownPostProcessor((element, context) => {
-			const objects = element.querySelectorAll("dtype");
+			const objs = element.querySelectorAll("dtype");
 
-			for (let index = 0; index < datatypes.length; index++) {
-			  const datatype = datatypes.item(index);
-			  const text = codeblock.innerText.trim();
+			// log objects
+			for (let obj of objs) {
+				console.log(obj);
+			}
 
-			  if (isEmoji) {
-				context.addChild(new Emoji(codeblock, text));
-			  }
+			// for each object, adapt it and use this.render
+			for (let index = 0; index < objs.length; index++) {
+				let obj = objs[index];
+				const source = obj.innerHTML;
+				this.render(source, obj);
 			}
 		});
 
 		this.registerMarkdownCodeBlockProcessor('dtype', async (source: string, el: HTMLElement, ctx) => {
-			let userOptions = {};
-			let error = null;
-
-			let lines = source.split('\n');
-
-			let args: { [key: string]: string } = {};
-			for (let line of lines) {
-				let [key, value] = line.split(':');
-				args[key] = value.trim();
-			}
-
-			// get the value of the 'type' entry in args
-			if (args['type'] == "hello") {
-				el.innerHTML = "Hello, World!</div>";
-			} else {
-				error = "Unknown datatype '" + args['type'] + "'; install a plugin.";
-			}
-
-			if (error !== null) {
-				const errorNode = document.createElement('div');
-				errorNode.innerHTML = error;
-				errorNode.addClass("obsidian-datatype-error");
-				el.appendChild(errorNode);
-			}
+			this.render(source, el);
 		});
 	}
 

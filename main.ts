@@ -26,7 +26,7 @@ export default class DatatypePlugin extends Plugin {
 	postprocessors: Map<string, MarkdownPostProcessor> = new Map();
 
 	async renderDatatype(el, source, obj): Promise<void> {
-		el.innerHTML = '<div class=".datatype">datatype here</div>';
+		el.innerHTML = '<div class=".datatype-object">datatype here</div>';
 	}
 
 	async onload(): Promise<void> {
@@ -39,7 +39,7 @@ export default class DatatypePlugin extends Plugin {
 				let modal = new InsertDatatypeModal(this.app);
 				modal.onClose = () => {
 					editor.getDoc().replaceSelection(
-						"```datatype hello\n```"
+						"```dtype\ntype: hello\n```"
 					);
 					const cursor = editor.getCursor();
 					editor.setCursor(cursor.line - 1);
@@ -50,7 +50,20 @@ export default class DatatypePlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		this.registerMarkdownCodeBlockProcessor('datatype', async (source: string, el: HTMLElement, ctx) => {
+		this.registerMarkdownPostProcessor((element, context) => {
+			const objects = element.querySelectorAll("dtype");
+
+			for (let index = 0; index < datatypes.length; index++) {
+			  const datatype = datatypes.item(index);
+			  const text = codeblock.innerText.trim();
+
+			  if (isEmoji) {
+				context.addChild(new Emoji(codeblock, text));
+			  }
+			}
+		});
+
+		this.registerMarkdownCodeBlockProcessor('dtype', async (source: string, el: HTMLElement, ctx) => {
 			let userOptions = {};
 			let error = null;
 
@@ -66,14 +79,13 @@ export default class DatatypePlugin extends Plugin {
 			if (args['type'] == "hello") {
 				el.innerHTML = "Hello, World!</div>";
 			} else {
-				el.innerHTML = "<div class='datatype'>(unknown datatype '" + args['type'] + "'; install a plugin)</div>";
+				error = "Unknown datatype '" + args['type'] + "'; install a plugin.";
 			}
-
 
 			if (error !== null) {
 				const errorNode = document.createElement('div');
 				errorNode.innerHTML = error;
-				errorNode.addClass("obsidian-plugin-abcjs-error");
+				errorNode.addClass("obsidian-datatype-error");
 				el.appendChild(errorNode);
 			}
 		});

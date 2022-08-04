@@ -1,3 +1,8 @@
-.datatype {
+.datatype-object {
     color: yellow;
+}
+
+.obsidian-datatype-error {
+    color: red;
+    background-color: black;
 }
